@@ -5,9 +5,15 @@ const Tail = require("tail").Tail;
 
 const run = (callback) => {
   const configFile = core.getInput("config_file", { required: true });
+  const host = core.getInput("host");
   const username = core.getInput("username");
   const password = core.getInput("password");
+  const port = core.getInput("port");
+  const protocol = core.getInput("protocol");
+  const ca = core.getInput("ca");
+  const cert = core.getInput("cert");
   const clientKey = core.getInput("client_key");
+  const clientPass = core.getInput("client_pass");
   const tlsAuthKey = core.getInput("tls_auth_key");
   const tlsCryptKey = core.getInput("tls_crypt_key");
   const tlsCryptV2Key = core.getInput("tls_crypt_v2_key");
@@ -20,6 +26,11 @@ const run = (callback) => {
 
   fs.appendFileSync(configFile, "\n# ----- modified by action -----\n");
 
+  // remote setup
+  if (host && port && protocol) {
+    fs.appendFileSync(configFile, `remote ${host} ${port} ${protocol}\n`);
+  }
+
   // username & password auth
   if (username && password) {
     fs.appendFileSync(configFile, "auth-user-pass up.txt\n");
@@ -30,6 +41,21 @@ const run = (callback) => {
   if (clientKey) {
     fs.appendFileSync(configFile, "key client.key\n");
     fs.writeFileSync("client.key", clientKey, { mode: 0o600 });
+  }
+  // if passphrase given
+  if (clientPass) {
+    fs.appendFileSync(configFile, "askpass pass.txt\n");
+    fs.writeFileSync("pass.txt", clientPass, { mode: 0o600 });
+  }
+  // if ca given
+  if (ca) {
+    fs.appendFileSync(configFile, "ca ca.pem\n");
+    fs.writeFileSync("ca.pem", ca, { mode: 0o600 });
+  }
+  // if cert given
+  if (cert) {
+    fs.appendFileSync(configFile, "cert ca.crt\n");
+    fs.writeFileSync("ca.crt", cert, { mode: 0o600 });
   }
 
   if (tlsAuthKey) {
